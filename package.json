@@ -7,5 +7,5 @@
   "scripts": {
     "test:web": "npm --workspace @ai-advisor/web run test"
   },
-  "packageManager": "pnpm@9.15.4"
+  "packageManager": "npm@10.9.2"
 }
