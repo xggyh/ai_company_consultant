@@ -42,15 +42,23 @@ type RequestArkJsonParams = {
   temperature?: number;
 };
 
+function sanitizeValue(value: string | undefined) {
+  return (value || "").trim();
+}
+
+function sanitizeToken(value: string | undefined) {
+  return (value || "").replace(/\s+/g, "");
+}
+
 export function getArkConfig(env: EnvSource = process.env): ArkConfig | null {
-  const apiKey = env.ARK_API_KEY;
+  const apiKey = sanitizeToken(env.ARK_API_KEY);
   if (!apiKey) {
     return null;
   }
   return {
     apiKey,
-    baseURL: env.ARK_BASE_URL ?? DEFAULT_ARK_BASE_URL,
-    model: env.ARK_MODEL ?? DEFAULT_ARK_MODEL,
+    baseURL: sanitizeValue(env.ARK_BASE_URL) || DEFAULT_ARK_BASE_URL,
+    model: sanitizeValue(env.ARK_MODEL) || DEFAULT_ARK_MODEL,
   };
 }
 

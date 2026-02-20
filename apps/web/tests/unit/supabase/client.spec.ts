@@ -22,4 +22,12 @@ describe("supabase client config", () => {
 
     expect(configured).toBe(true);
   });
+
+  it("supports SUPABASE_ANON_KEY as server fallback", () => {
+    const config = getSupabaseClientConfig({
+      SUPABASE_URL: "https://izltncuiuavpyxplynxe.supabase.co",
+      SUPABASE_ANON_KEY: "sb_publishable_xxx",
+    });
+    expect(config.anonKey).toBe("sb_publishable_xxx");
+  });
 });

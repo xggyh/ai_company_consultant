@@ -503,7 +503,13 @@ function createSupabaseRepository(client: SupabaseClient): DataRepository {
         company_scale: profile.company_scale,
         preferred_scenarios: ["决策辅助", "自动化工作流", "知识问答"],
       });
-      const ranked = await buildModelViewsWithArk(modelRows, profile);
+      let ranked: FeedData["models"] = [];
+      let modelRankingError = "";
+      try {
+        ranked = await buildModelViewsWithArk(modelRows, profile);
+      } catch (error) {
+        modelRankingError = error instanceof Error ? error.message : "Ark model ranking failed";
+      }
 
       const articleRows = ((articles || []) as Array<Record<string, unknown>>).map((row) => ({
         id: String(row.id),
@@ -528,7 +534,17 @@ function createSupabaseRepository(client: SupabaseClient): DataRepository {
         },
         models: ranked.slice(0, 24),
         articles: rankedArticles.slice(0, 8),
-        crawl,
+        crawl: modelRankingError
+          ? {
+              ...crawl,
+              warning: [crawl.warning, `模型评估服务暂不可用：${modelRankingError}`]
+                .filter((item): item is string => Boolean(item && item.trim()))
+                .join("；"),
+              error_message: [crawl.error_message, modelRankingError]
+                .filter((item): item is string => Boolean(item && item.trim()))
+                .join(" | "),
+            }
+          : crawl,
       };
     },
 
