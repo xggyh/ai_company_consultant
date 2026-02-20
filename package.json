@@ -1,0 +1,10 @@
+{
+  "name": "yh-proj-codex",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "test:web": "npm --workspace @ai-advisor/web run test"
+  }
+}
