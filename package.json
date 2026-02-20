@@ -7,5 +7,11 @@
   "scripts": {
     "test:web": "npm --workspace @ai-advisor/web run test"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  },
   "packageManager": "npm@10.9.2"
 }
