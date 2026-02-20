@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { FeedData } from "../../lib/data/repository";
 
@@ -196,9 +197,9 @@ export function FeedStream({
                     >
                       {loading ? "处理中..." : active ? "已收藏" : "收藏"}
                     </button>
-                    <a className="detail-link" href={`/models/${model.id}`}>
+                    <Link className="detail-link" href={`/models/${model.id}`}>
                       查看详情
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </article>
@@ -241,9 +242,9 @@ export function FeedStream({
                       >
                         {loading ? "处理中..." : active ? "已收藏" : "收藏"}
                       </button>
-                      <a className="detail-link" href={`/articles/${article.id}`}>
+                      <Link className="detail-link" href={`/articles/${article.id}`}>
                         查看详情
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </article>

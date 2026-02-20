@@ -89,6 +89,14 @@ type FeedModelBase = {
   cost_output: number;
 };
 
+type ModelRankingCacheEntry = {
+  expires_at: number;
+  models: FeedData["models"];
+};
+
+const MODEL_RANK_CACHE_TTL_MS = Number(process.env.MODEL_RANK_CACHE_TTL_MS || 5 * 60 * 1000);
+const modelRankingCache = new Map<string, ModelRankingCacheEntry>();
+
 export type ModelDetail = {
   id: string;
   name: string;
@@ -442,6 +450,14 @@ async function buildModelViewsWithArk(
   return [...featured, ...practical];
 }
 
+function buildModelRankingCacheKey(models: FeedModelBase[], profile: UserProfile) {
+  return JSON.stringify({
+    industry: profile.company_industry,
+    scale: profile.company_scale,
+    ids: models.map((model) => model.id),
+  });
+}
+
 function createSupabaseRepository(client: SupabaseClient): DataRepository {
   return {
     async getProfile() {
@@ -503,12 +519,27 @@ function createSupabaseRepository(client: SupabaseClient): DataRepository {
         company_scale: profile.company_scale,
         preferred_scenarios: ["决策辅助", "自动化工作流", "知识问答"],
       });
+      const rankingCacheKey = buildModelRankingCacheKey(modelRows, profile);
+      const cachedRanking = modelRankingCache.get(rankingCacheKey);
+
       let ranked: FeedData["models"] = [];
       let modelRankingError = "";
-      try {
-        ranked = await buildModelViewsWithArk(modelRows, profile);
-      } catch (error) {
-        modelRankingError = error instanceof Error ? error.message : "Ark model ranking failed";
+      const now = Date.now();
+      if (cachedRanking && cachedRanking.expires_at > now) {
+        ranked = cachedRanking.models;
+      } else {
+        try {
+          ranked = await buildModelViewsWithArk(modelRows, profile);
+          modelRankingCache.set(rankingCacheKey, {
+            expires_at: now + MODEL_RANK_CACHE_TTL_MS,
+            models: ranked,
+          });
+        } catch (error) {
+          modelRankingError = error instanceof Error ? error.message : "Ark model ranking failed";
+          if (cachedRanking?.models?.length) {
+            ranked = cachedRanking.models;
+          }
+        }
       }
 
       const articleRows = ((articles || []) as Array<Record<string, unknown>>).map((row) => ({

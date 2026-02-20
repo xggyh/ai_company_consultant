@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FeedStream } from "../feed/feed-stream";
 import { LeftSidebar } from "../layout/left-sidebar";
 import { RightSidebar } from "../layout/right-sidebar";
@@ -44,12 +45,12 @@ export function MainDashboard({ data }: { data: DashboardData }) {
               </div>
             </div>
             <div className="hero-actions">
-              <a href="/advisor" className="btn btn-main">
+              <Link href="/advisor" className="btn btn-main">
                 进入智能顾问
-              </a>
-              <a href="/insights" className="btn btn-ghost">
+              </Link>
+              <Link href="/insights" className="btn btn-ghost">
                 查看行业资讯
-              </a>
+              </Link>
             </div>
           </header>
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { FeedData } from "../../lib/data/repository";
 
 type Favorites = {
@@ -22,18 +23,18 @@ export function RightSidebar({
       <section>
         <h3 className="section-title">快捷入口</h3>
         <div className="quick-grid">
-          <a href="/advisor" className="quick-item">
+          <Link href="/advisor" className="quick-item">
             发起咨询
-          </a>
-          <a href="/insights" className="quick-item">
+          </Link>
+          <Link href="/insights" className="quick-item">
             资讯速览
-          </a>
-          <a href="/explore" className="quick-item">
+          </Link>
+          <Link href="/explore" className="quick-item">
             模型对比
-          </a>
-          <a href="/favorites" className="quick-item">
+          </Link>
+          <Link href="/favorites" className="quick-item">
             我的收藏
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -42,10 +43,10 @@ export function RightSidebar({
         <div className="mini-list">
           {favoriteModels.length === 0 ? <p className="empty-tip">暂无收藏</p> : null}
           {favoriteModels.map((model) => (
-            <a key={model.id} className="mini-item mini-link" href={`/models/${model.id}`}>
+            <Link key={model.id} className="mini-item mini-link" href={`/models/${model.id}`}>
               <div>{model.name}</div>
               <span>{model.provider}</span>
-            </a>
+            </Link>
           ))}
         </div>
       </section>
@@ -55,10 +56,10 @@ export function RightSidebar({
         <div className="mini-list">
           {favoriteArticles.length === 0 ? <p className="empty-tip">暂无收藏</p> : null}
           {favoriteArticles.map((article) => (
-            <a key={article.id} className="mini-item mini-link" href={`/articles/${article.id}`}>
+            <Link key={article.id} className="mini-item mini-link" href={`/articles/${article.id}`}>
               <div>{article.title}</div>
               <span>{article.source}</span>
-            </a>
+            </Link>
           ))}
         </div>
       </section>

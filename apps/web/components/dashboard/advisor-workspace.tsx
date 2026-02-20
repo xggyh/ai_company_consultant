@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { DashboardData } from "../../lib/dashboard";
 import { AdvisorChat } from "../chat/advisor-chat";
 import { LeftSidebar } from "../layout/left-sidebar";
@@ -58,10 +59,10 @@ export function AdvisorWorkspace({ data }: { data: DashboardData }) {
                 <h3 className="section-title">推荐模型</h3>
                 <div className="mini-list">
                   {data.models.slice(0, 4).map((model) => (
-                    <a key={model.id} className="mini-item mini-link" href={`/models/${model.id}`}>
+                    <Link key={model.id} className="mini-item mini-link" href={`/models/${model.id}`}>
                       <div>{model.name}</div>
                       <span>{model.provider}</span>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </section>
@@ -70,10 +71,10 @@ export function AdvisorWorkspace({ data }: { data: DashboardData }) {
                 <h3 className="section-title">参考资讯</h3>
                 <div className="mini-list">
                   {data.articles.slice(0, 4).map((article) => (
-                    <a key={article.id} className="mini-item mini-link" href={`/articles/${article.id}`}>
+                    <Link key={article.id} className="mini-item mini-link" href={`/articles/${article.id}`}>
                       <div>{article.title}</div>
                       <span>{article.source}</span>
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </section>

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function DashboardErrorView({ message }: { message: string }) {
   return (
     <main className="explore-shell">
@@ -9,12 +11,12 @@ export function DashboardErrorView({ message }: { message: string }) {
         </p>
         <p className="crawl-warning">{message}</p>
         <div className="hero-actions">
-          <a href="/explore" className="btn btn-main">
+          <Link href="/explore" className="btn btn-main">
             返回探索页
-          </a>
-          <a href="/login" className="btn btn-ghost">
+          </Link>
+          <Link href="/login" className="btn btn-ghost">
             检查档案与配置
-          </a>
+          </Link>
         </div>
       </section>
     </main>

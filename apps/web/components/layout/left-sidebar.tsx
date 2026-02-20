@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Conversation } from "../../lib/data/repository";
 
 type SidebarTab = "explore" | "insights" | "advisor" | "favorites";
@@ -16,21 +17,21 @@ export function LeftSidebar({
       <section>
         <h3 className="section-title">工作区</h3>
         <nav className="nav-list">
-          <a className={`nav-item ${activeTab === "explore" ? "nav-item-active" : ""}`} href="/explore">
+          <Link className={`nav-item ${activeTab === "explore" ? "nav-item-active" : ""}`} href="/explore">
             模型探索
-          </a>
-          <a className={`nav-item ${activeTab === "insights" ? "nav-item-active" : ""}`} href="/insights">
+          </Link>
+          <Link className={`nav-item ${activeTab === "insights" ? "nav-item-active" : ""}`} href="/insights">
             资讯雷达
-          </a>
-          <a className={`nav-item ${activeTab === "advisor" ? "nav-item-active" : ""}`} href="/advisor">
+          </Link>
+          <Link className={`nav-item ${activeTab === "advisor" ? "nav-item-active" : ""}`} href="/advisor">
             智能顾问
-          </a>
-          <a className={`nav-item ${activeTab === "favorites" ? "nav-item-active" : ""}`} href="/favorites">
+          </Link>
+          <Link className={`nav-item ${activeTab === "favorites" ? "nav-item-active" : ""}`} href="/favorites">
             我的收藏
-          </a>
-          <a className="nav-item" href="/login">
+          </Link>
+          <Link className="nav-item" href="/login">
             档案设置
-          </a>
+          </Link>
         </nav>
       </section>
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { UserProfile } from "../../lib/data/repository";
 
 type TopbarTab = "explore" | "insights" | "advisor" | "favorites";
@@ -14,27 +15,27 @@ export function Topbar({ profile, activeTab }: { profile: UserProfile; activeTab
       </div>
 
       <nav className="topbar-nav">
-        <a href="/explore" className={`topbar-link ${activeTab === "explore" ? "topbar-link-active" : ""}`}>
+        <Link href="/explore" className={`topbar-link ${activeTab === "explore" ? "topbar-link-active" : ""}`}>
           探索
-        </a>
-        <a
+        </Link>
+        <Link
           href="/insights"
           className={`topbar-link ${activeTab === "insights" ? "topbar-link-active" : ""}`}
         >
           资讯
-        </a>
-        <a href="/advisor" className={`topbar-link ${activeTab === "advisor" ? "topbar-link-active" : ""}`}>
+        </Link>
+        <Link href="/advisor" className={`topbar-link ${activeTab === "advisor" ? "topbar-link-active" : ""}`}>
           AI 顾问
-        </a>
-        <a
+        </Link>
+        <Link
           href="/favorites"
           className={`topbar-link ${activeTab === "favorites" ? "topbar-link-active" : ""}`}
         >
           收藏
-        </a>
-        <a href="/login" className="topbar-link">
+        </Link>
+        <Link href="/login" className="topbar-link">
           企业档案
-        </a>
+        </Link>
       </nav>
 
       <div className="topbar-meta">
