@@ -2,15 +2,21 @@ import { describe, expect, it } from "vitest";
 import { buildSolution } from "../../../lib/agents/solution-agent";
 
 describe("buildSolution", () => {
-  it("returns 1-3 solutions with roi and cost fields", async () => {
-    const result = await buildSolution({
-      industry: "企业服务（SaaS）",
-      pain_points: ["销售线索转化低"],
-      goals: ["提升成交率"],
-    });
-    expect(result.length).toBeGreaterThanOrEqual(1);
-    expect(result.length).toBeLessThanOrEqual(3);
-    expect(result[0]).toHaveProperty("estimated_monthly_cost");
-    expect(result[0]).toHaveProperty("roi_hypothesis");
+  it("throws when ark is not configured", async () => {
+    const previous = process.env.ARK_API_KEY;
+    delete process.env.ARK_API_KEY;
+
+    await expect(
+      buildSolution({
+        raw_user_input: "我们是SaaS公司，想提升销售转化",
+        industry: "企业服务（SaaS）",
+        pain_points: ["销售线索转化低"],
+        goals: ["提升成交率"],
+      }),
+    ).rejects.toThrow("ARK is not configured");
+
+    if (previous) {
+      process.env.ARK_API_KEY = previous;
+    }
   });
 });

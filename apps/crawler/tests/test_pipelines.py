@@ -27,19 +27,21 @@ def test_run_model_pipeline_dedupes_by_provider_name(monkeypatch):
     monkeypatch.setattr(model_pipeline, "fetch_models_for_source", fake_fetch)
     monkeypatch.setattr(model_pipeline, "enrich_models", lambda rows: rows)
 
-    def fake_upsert(rows):
+    def fake_upsert(rows, run_id=None):
         persisted["rows"] = rows
+        persisted["run_id"] = run_id
         return len(rows)
 
     monkeypatch.setattr(model_pipeline, "upsert_models", fake_upsert)
 
-    stats = model_pipeline.run_model_pipeline(limit_per_source=50)
+    stats = model_pipeline.run_model_pipeline(limit_per_source=50, run_id="run_test")
 
     assert stats["sources"] == 2
     assert stats["fetched"] == 3
     assert stats["deduped"] == 2
     assert stats["persisted"] == 2
     assert len(persisted["rows"]) == 2
+    assert persisted["run_id"] == "run_test"
 
 
 
@@ -82,16 +84,18 @@ def test_run_news_pipeline_dedupes_by_normalized_url(monkeypatch):
     monkeypatch.setattr(news_pipeline, "fetch_news_for_source", fake_fetch)
     monkeypatch.setattr(news_pipeline, "enrich_articles", lambda rows: rows)
 
-    def fake_upsert(rows):
+    def fake_upsert(rows, run_id=None):
         persisted["rows"] = rows
+        persisted["run_id"] = run_id
         return len(rows)
 
     monkeypatch.setattr(news_pipeline, "upsert_articles", fake_upsert)
 
-    stats = news_pipeline.run_news_pipeline(limit_per_source=20)
+    stats = news_pipeline.run_news_pipeline(limit_per_source=20, run_id="run_test")
 
     assert stats["sources"] == 2
     assert stats["fetched"] == 3
     assert stats["deduped"] == 2
     assert stats["persisted"] == 2
     assert len(persisted["rows"]) == 2
+    assert persisted["run_id"] == "run_test"

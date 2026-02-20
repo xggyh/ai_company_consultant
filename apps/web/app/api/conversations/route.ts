@@ -6,14 +6,24 @@ export function listConversations() {
 }
 
 export async function GET() {
-  const repo = getDataRepository();
-  return NextResponse.json({ conversations: await repo.getConversations() });
+  try {
+    const repo = getDataRepository();
+    return NextResponse.json({ conversations: await repo.getConversations() });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load conversations";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
-  const payload = (await req.json()) as { title?: string };
-  const title = payload.title?.trim() || "新对话";
-  const repo = getDataRepository();
-  const conversation = await repo.appendConversation(title);
-  return NextResponse.json({ ok: true, conversation });
+  try {
+    const payload = (await req.json()) as { title?: string };
+    const title = payload.title?.trim() || "新对话";
+    const repo = getDataRepository();
+    const conversation = await repo.appendConversation(title);
+    return NextResponse.json({ ok: true, conversation });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to create conversation";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

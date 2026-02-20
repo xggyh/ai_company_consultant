@@ -1,7 +1,7 @@
-import { MainDashboard } from "../../../components/dashboard/main-dashboard";
+import { AdvisorWorkspace } from "../../../components/dashboard/advisor-workspace";
 import { getDashboardData } from "../../../lib/dashboard";
 
 export default async function AdvisorPage() {
   const data = await getDashboardData();
-  return <MainDashboard data={data} />;
+  return <AdvisorWorkspace data={data} />;
 }

@@ -59,6 +59,10 @@ def _request(
     return []
 
 
+def _is_missing_column_error(error: Exception, column: str) -> bool:
+    return column in str(error)
+
+
 def _normalize_timestamp(value: str | None) -> str | None:
     if not value:
         return None
@@ -104,11 +108,12 @@ def _article_payload(row: ArticleRecord) -> dict[str, object]:
     }
 
 
-def upsert_models(rows: list[ModelRecord]) -> int:
+def upsert_models(rows: list[ModelRecord], run_id: str | None = None) -> int:
     if not rows:
         return 0
     base_url, key = _supabase_config()
     persisted = 0
+    crawled_at = datetime.now(timezone.utc).isoformat()
 
     for row in rows:
         name = row.name.strip()
@@ -123,34 +128,112 @@ def upsert_models(rows: list[ModelRecord]) -> int:
         )
         existing = _request("GET", existing_url, key)
         payload = _model_payload(row)
+        if run_id:
+            payload["crawl_run_id"] = run_id
+        payload["last_crawled_at"] = crawled_at
 
-        if existing:
-            model_id = str(existing[0]["id"])
-            patch_url = f"{base_url}/rest/v1/models?id=eq.{quote(model_id, safe='')}"
-            _request("PATCH", patch_url, key, payload=payload, prefer="return=minimal")
-        else:
-            insert_url = f"{base_url}/rest/v1/models"
-            _request("POST", insert_url, key, payload=payload, prefer="return=minimal")
+        try:
+            if existing:
+                model_id = str(existing[0]["id"])
+                patch_url = f"{base_url}/rest/v1/models?id=eq.{quote(model_id, safe='')}"
+                _request("PATCH", patch_url, key, payload=payload, prefer="return=minimal")
+            else:
+                insert_url = f"{base_url}/rest/v1/models"
+                _request("POST", insert_url, key, payload=payload, prefer="return=minimal")
+        except RuntimeError as error:
+            if _is_missing_column_error(error, "crawl_run_id") or _is_missing_column_error(
+                error, "last_crawled_at"
+            ):
+                fallback_payload = dict(payload)
+                fallback_payload.pop("crawl_run_id", None)
+                fallback_payload.pop("last_crawled_at", None)
+                if existing:
+                    model_id = str(existing[0]["id"])
+                    patch_url = f"{base_url}/rest/v1/models?id=eq.{quote(model_id, safe='')}"
+                    _request("PATCH", patch_url, key, payload=fallback_payload, prefer="return=minimal")
+                else:
+                    insert_url = f"{base_url}/rest/v1/models"
+                    _request("POST", insert_url, key, payload=fallback_payload, prefer="return=minimal")
+            else:
+                raise
         persisted += 1
 
     return persisted
 
 
-def upsert_articles(rows: list[ArticleRecord]) -> int:
+def upsert_articles(rows: list[ArticleRecord], run_id: str | None = None) -> int:
     if not rows:
         return 0
 
     base_url, key = _supabase_config()
-    payloads = [_article_payload(row) for row in rows if row.url.strip() and row.title.strip()]
+    crawled_at = datetime.now(timezone.utc).isoformat()
+    payloads = []
+    for row in rows:
+        if not row.url.strip() or not row.title.strip():
+            continue
+        payload = _article_payload(row)
+        if run_id:
+            payload["crawl_run_id"] = run_id
+        payload["last_crawled_at"] = crawled_at
+        payloads.append(payload)
     if not payloads:
         return 0
 
     upsert_url = f"{base_url}/rest/v1/articles?on_conflict=url"
-    _request(
-        "POST",
-        upsert_url,
-        key,
-        payload=payloads,
-        prefer="resolution=merge-duplicates,return=minimal",
-    )
+    try:
+        _request(
+            "POST",
+            upsert_url,
+            key,
+            payload=payloads,
+            prefer="resolution=merge-duplicates,return=minimal",
+        )
+    except RuntimeError as error:
+        if _is_missing_column_error(error, "crawl_run_id") or _is_missing_column_error(
+            error, "last_crawled_at"
+        ):
+            fallback_payloads: list[dict[str, object]] = []
+            for payload in payloads:
+                fallback = dict(payload)
+                fallback.pop("crawl_run_id", None)
+                fallback.pop("last_crawled_at", None)
+                fallback_payloads.append(fallback)
+            _request(
+                "POST",
+                upsert_url,
+                key,
+                payload=fallback_payloads,
+                prefer="resolution=merge-duplicates,return=minimal",
+            )
+        else:
+            raise
     return len(payloads)
+
+
+def insert_crawler_run(
+    *,
+    run_id: str,
+    started_at: str,
+    finished_at: str,
+    status: str,
+    model_persisted: int,
+    article_persisted: int,
+    error_message: str | None = None,
+) -> None:
+    base_url, key = _supabase_config()
+    payload = {
+        "id": run_id,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "status": status,
+        "model_persisted": model_persisted,
+        "article_persisted": article_persisted,
+        "error_message": error_message,
+    }
+    insert_url = f"{base_url}/rest/v1/crawler_runs"
+    try:
+        _request("POST", insert_url, key, payload=payload, prefer="return=minimal")
+    except RuntimeError as error:
+        if "crawler_runs" in str(error):
+            return
+        raise

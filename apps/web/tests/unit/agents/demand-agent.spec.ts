@@ -2,9 +2,16 @@ import { describe, expect, it } from "vitest";
 import { analyzeDemand } from "../../../lib/agents/demand-agent";
 
 describe("analyzeDemand", () => {
-  it("asks follow-up when key fields missing", async () => {
-    const result = await analyzeDemand({ user_input: "我们想上AI" });
-    expect(result.need_follow_up).toBe(true);
-    expect(result.follow_up_question.length).toBeGreaterThan(0);
+  it("throws when ark is not configured", async () => {
+    const previous = process.env.ARK_API_KEY;
+    delete process.env.ARK_API_KEY;
+
+    await expect(analyzeDemand({ user_input: "我们想上AI" })).rejects.toThrow(
+      "ARK is not configured",
+    );
+
+    if (previous) {
+      process.env.ARK_API_KEY = previous;
+    }
   });
 });

@@ -14,13 +14,35 @@ export function validateFavoritePayload(payload: { model_id?: string; article_id
 }
 
 export async function GET() {
-  const repo = getDataRepository();
-  return NextResponse.json(await repo.getFavorites());
+  try {
+    const repo = getDataRepository();
+    return NextResponse.json(await repo.getFavorites());
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load favorites";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
-  const payload = (await req.json()) as { model_id?: string; article_id?: string };
-  validateFavoritePayload(payload);
-  const repo = getDataRepository();
-  return NextResponse.json({ ok: true, favorites: await repo.addFavorite(payload) });
+  try {
+    const payload = (await req.json()) as { model_id?: string; article_id?: string };
+    validateFavoritePayload(payload);
+    const repo = getDataRepository();
+    return NextResponse.json({ ok: true, favorites: await repo.addFavorite(payload) });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to add favorite";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const payload = (await req.json()) as { model_id?: string; article_id?: string };
+    validateFavoritePayload(payload);
+    const repo = getDataRepository();
+    return NextResponse.json({ ok: true, favorites: await repo.removeFavorite(payload) });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to remove favorite";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

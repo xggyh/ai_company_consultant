@@ -25,6 +25,7 @@ describe("buildSolution with ark", () => {
 
     const result = await buildSolution(
       {
+        raw_user_input: "我们是SaaS公司，目标提升销售转化",
         industry: "企业服务（SaaS）",
         pain_points: ["线索转化低"],
         goals: ["提升成交率"],

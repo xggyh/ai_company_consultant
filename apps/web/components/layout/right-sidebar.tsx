@@ -25,14 +25,14 @@ export function RightSidebar({
           <a href="/advisor" className="quick-item">
             发起咨询
           </a>
-          <a href="/explore" className="quick-item">
-            探索模型
+          <a href="/insights" className="quick-item">
+            资讯速览
           </a>
           <a href="/explore" className="quick-item">
-            今日资讯
+            模型对比
           </a>
-          <a href="/login" className="quick-item">
-            企业信息
+          <a href="/favorites" className="quick-item">
+            我的收藏
           </a>
         </div>
       </section>

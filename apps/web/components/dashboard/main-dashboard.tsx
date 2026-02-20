@@ -1,49 +1,34 @@
-import { AdvisorChat } from "../chat/advisor-chat";
 import { FeedStream } from "../feed/feed-stream";
 import { LeftSidebar } from "../layout/left-sidebar";
 import { RightSidebar } from "../layout/right-sidebar";
+import { Topbar } from "../layout/topbar";
 import type { DashboardData } from "../../lib/dashboard";
 
 export function MainDashboard({ data }: { data: DashboardData }) {
   return (
     <main className="explore-shell">
-      <header className="panel topbar">
-        <div className="logo-wrap">
-          <div className="logo-dot" />
-          <div>
-            <div className="logo-title">AI Enterprise Advisor</div>
-            <div className="logo-subtitle">企业 AI 决策探索中心</div>
-          </div>
-        </div>
-
-        <nav className="topbar-nav">
-          <a href="/explore" className="topbar-link topbar-link-active">
-            探索中心
-          </a>
-          <a href="/advisor" className="topbar-link">
-            AI 顾问
-          </a>
-          <a href="/login" className="topbar-link">
-            企业档案
-          </a>
-        </nav>
-
-        <div className="topbar-meta">
-          <span>{data.profile.company_industry}</span>
-          <span>{data.profile.company_scale}</span>
-        </div>
-      </header>
+      <Topbar profile={data.profile} activeTab="explore" />
 
       <div className="explore-grid">
-        <LeftSidebar conversations={data.conversations} />
+        <LeftSidebar conversations={data.conversations} activeTab="explore" showHistory={false} />
 
         <section className="center-stage">
           <header className="panel hero-panel">
-            <p className="hero-badge">实时推荐</p>
-            <h1>{data.profile.company_name} 的 AI 机会地图</h1>
+            <p className="hero-badge">模型策略台</p>
+            <h1>{data.profile.company_name} 企业级 AI 决策中台</h1>
             <p className="hero-copy">
-              聚合模型能力、资讯动态与落地建议，支持从探索到方案落地的一体化决策。
+              整合模型能力、行业情报与实施评估，支持从机会识别、方案比选到上线落地的闭环决策。
             </p>
+            {data.crawl.warning ? (
+              <p className="crawl-warning">{data.crawl.warning}</p>
+            ) : (
+              <p className="crawl-meta">
+                最近一次成功同步：
+                {data.crawl.last_success_at
+                  ? new Date(data.crawl.last_success_at).toLocaleString("zh-CN")
+                  : "暂无记录"}
+              </p>
+            )}
             <div className="hero-metrics">
               <div>
                 <span>候选模型</span>
@@ -58,14 +43,28 @@ export function MainDashboard({ data }: { data: DashboardData }) {
                 <strong>{data.favorites.model_ids.length + data.favorites.article_ids.length}</strong>
               </div>
             </div>
+            <div className="hero-actions">
+              <a href="/advisor" className="btn btn-main">
+                进入智能顾问
+              </a>
+              <a href="/insights" className="btn btn-ghost">
+                查看行业资讯
+              </a>
+            </div>
           </header>
 
-          <FeedStream models={data.models} articles={data.articles} />
+          <FeedStream
+            models={data.models}
+            articles={data.articles}
+            favorites={data.favorites}
+            mode="models"
+            title="模型能力推荐"
+            subtitle="结合企业行业、规模与场景偏好进行排序"
+          />
         </section>
 
         <section className="right-stage">
           <RightSidebar models={data.models} articles={data.articles} favorites={data.favorites} />
-          <AdvisorChat />
         </section>
       </div>
     </main>

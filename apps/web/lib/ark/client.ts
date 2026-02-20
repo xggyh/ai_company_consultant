@@ -91,7 +91,11 @@ export function parseArkJsonContent(content: string): unknown {
 }
 
 export async function requestArkJson(params: RequestArkJsonParams): Promise<unknown> {
-  const baseRequest = {
+  const baseRequest: {
+    model: string;
+    messages: ArkMessage[];
+    temperature?: number;
+  } = {
     model: params.model,
     messages: params.messages,
     temperature: params.temperature,
@@ -104,9 +108,40 @@ export async function requestArkJson(params: RequestArkJsonParams): Promise<unkn
     });
     const content = structured.choices[0]?.message?.content ?? "";
     return parseArkJsonContent(content);
-  } catch (error) {
-    const fallback = await params.client.chat.completions.create(baseRequest);
-    const content = fallback.choices[0]?.message?.content ?? "";
-    return parseArkJsonContent(content);
+  } catch {
+    // Some Ark models do not support response_format=json_object.
   }
+
+  let attemptMessages = baseRequest.messages;
+  let lastError = "Unknown Ark JSON parsing error";
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const completion = await params.client.chat.completions.create({
+      ...baseRequest,
+      messages: attemptMessages,
+    });
+    const content = completion.choices[0]?.message?.content ?? "";
+
+    try {
+      return parseArkJsonContent(content);
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "Ark JSON parsing failed";
+      if (attempt === 2) {
+        break;
+      }
+
+      const safeContent = content.slice(0, 2800);
+      attemptMessages = [
+        ...params.messages,
+        { role: "assistant", content: safeContent },
+        {
+          role: "user",
+          content:
+            "上一次返回不是合法 JSON。请仅返回一个合法 JSON 对象，不要额外解释，不要 markdown，不要代码块，字符串里的双引号必须转义。",
+        },
+      ];
+    }
+  }
+
+  throw new Error(`Ark returned invalid JSON after retries: ${lastError}`);
 }

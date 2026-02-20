@@ -37,6 +37,7 @@ export async function handleAdvisorMessage(input: {
   }
 
   const solutions = await buildSolution({
+    raw_user_input: input.message,
     industry: demand.demand?.industry ?? "其他",
     pain_points: demand.demand?.pain_points ?? [],
     goals: demand.demand?.goals ?? [],
@@ -61,15 +62,20 @@ export async function handleAdvisorMessage(input: {
 }
 
 export async function POST(req: Request) {
-  const payload = (await req.json()) as {
-    message?: string;
-    conversation_id?: string;
-    conversation_title?: string;
-  };
-  const result = await handleAdvisorMessage({
-    message: payload.message ?? "",
-    conversation_id: payload.conversation_id,
-    conversation_title: payload.conversation_title,
-  });
-  return NextResponse.json(result);
+  try {
+    const payload = (await req.json()) as {
+      message?: string;
+      conversation_id?: string;
+      conversation_title?: string;
+    };
+    const result = await handleAdvisorMessage({
+      message: payload.message ?? "",
+      conversation_id: payload.conversation_id,
+      conversation_title: payload.conversation_title,
+    });
+    return NextResponse.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Advisor request failed";
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
 }

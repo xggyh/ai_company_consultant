@@ -103,15 +103,7 @@ def _call_ark_json(client: Any, prompt: str) -> dict[str, Any] | None:
             last_error = error
             if attempt < ARK_RETRY:
                 time.sleep(2**attempt)
-    if last_error:
-        return None
     return None
-
-
-def _fallback_tags(text: str) -> list[str]:
-    lowered = text.lower()
-    tags = [tag for tag, words in TAG_KEYWORDS.items() if any(word in lowered for word in words)]
-    return tags or ["决策辅助"]
 
 
 def _normalize_tag(tag: str) -> str:
@@ -126,14 +118,12 @@ def _normalize_tag(tag: str) -> str:
     for canonical, words in TAG_KEYWORDS.items():
         if any(word in lowered for word in words):
             return canonical
-    return ""
+    return clean
 
 
-def _normalize_tag_list(tags: list[str], fallback_text: str) -> list[str]:
+def _normalize_tag_list(tags: list[str]) -> list[str]:
     normalized = [_normalize_tag(tag) for tag in tags]
     filtered = [tag for tag in normalized if tag]
-    if not filtered:
-        return _fallback_tags(fallback_text)
     seen: set[str] = set()
     result: list[str] = []
     for tag in filtered:
@@ -144,28 +134,10 @@ def _normalize_tag_list(tags: list[str], fallback_text: str) -> list[str]:
     return result[:3]
 
 
-def _fallback_article(record: ArticleRecord) -> ArticleRecord:
-    seed = (record.content or record.title or "").strip()
-    summary = re.sub(r"\s+", " ", seed)[:120]
-    if not summary:
-        summary = record.title
-    tags = _fallback_tags(f"{record.title} {record.content}")
-    return replace(record, summary=summary, tags=tags)
-
-
-def _fallback_model(record: ModelRecord) -> ModelRecord:
-    joined = f"{record.name} {record.description}"
-    scenarios = _fallback_tags(joined)
-    desc = (record.description or "").strip()
-    if not desc:
-        desc = f"{record.provider} 模型，适用于{('、'.join(scenarios[:2]))}场景。"
-    return replace(record, description=desc, business_scenarios=scenarios)
-
-
 def enrich_articles(records: list[ArticleRecord]) -> list[ArticleRecord]:
     client = _build_client()
     if client is None:
-        return [_fallback_article(row) for row in records]
+        raise RuntimeError("ARK_API_KEY is required for article enrichment")
 
     enriched: list[ArticleRecord] = []
     for row in records:
@@ -176,18 +148,17 @@ def enrich_articles(records: list[ArticleRecord]) -> list[ArticleRecord]:
             f"source={row.source}\n"
             f"content={row.content[:1000]}"
         )
-        payload = _call_ark_json(client, prompt) or {}
+        payload = _call_ark_json(client, prompt)
+        if not payload:
+            raise RuntimeError(f"Ark enrich failed for article: {row.url}")
         summary = str(payload.get("summary") or "").strip()
         tags = payload.get("tags")
         safe_tags = (
-            _normalize_tag_list([str(item).strip() for item in tags], f"{row.title} {row.content}")
-            if isinstance(tags, list)
-            else _fallback_tags(f"{row.title} {row.content}")
+            _normalize_tag_list([str(item).strip() for item in tags]) if isinstance(tags, list) else []
         )
 
         if not summary or not safe_tags:
-            enriched.append(_fallback_article(row))
-            continue
+            raise RuntimeError(f"Ark returned invalid article payload: {row.url}")
         enriched.append(replace(row, summary=summary[:120], tags=safe_tags[:3]))
     return enriched
 
@@ -195,7 +166,7 @@ def enrich_articles(records: list[ArticleRecord]) -> list[ArticleRecord]:
 def enrich_models(records: list[ModelRecord]) -> list[ModelRecord]:
     client = _build_client()
     if client is None:
-        return [_fallback_model(row) for row in records]
+        raise RuntimeError("ARK_API_KEY is required for model enrichment")
 
     enriched: list[ModelRecord] = []
     for row in records:
@@ -206,18 +177,17 @@ def enrich_models(records: list[ModelRecord]) -> list[ModelRecord]:
             f"provider={row.provider}\n"
             f"description={row.description}"
         )
-        payload = _call_ark_json(client, prompt) or {}
+        payload = _call_ark_json(client, prompt)
+        if not payload:
+            raise RuntimeError(f"Ark enrich failed for model: {row.provider}/{row.name}")
         description = str(payload.get("description") or "").strip()
         scenarios = payload.get("business_scenarios")
         safe_scenarios = (
-            _normalize_tag_list([str(item).strip() for item in scenarios], f"{row.name} {row.description}")
-            if isinstance(scenarios, list)
-            else _fallback_tags(f"{row.name} {row.description}")
+            _normalize_tag_list([str(item).strip() for item in scenarios]) if isinstance(scenarios, list) else []
         )
 
         if not description or not safe_scenarios:
-            enriched.append(_fallback_model(row))
-            continue
+            raise RuntimeError(f"Ark returned invalid model payload: {row.provider}/{row.name}")
         enriched.append(
             replace(
                 row,

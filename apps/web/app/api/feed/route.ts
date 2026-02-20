@@ -15,8 +15,13 @@ export function getPersonalizedFeed(profile: FeedProfile) {
 }
 
 export async function GET() {
-  const repo = getDataRepository();
-  const profile = await repo.getProfile();
-  const feed = await repo.getFeed(profile);
-  return NextResponse.json(feed);
+  try {
+    const repo = getDataRepository();
+    const profile = await repo.getProfile();
+    const feed = await repo.getFeed(profile);
+    return NextResponse.json(feed);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load feed";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

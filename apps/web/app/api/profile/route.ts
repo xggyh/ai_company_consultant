@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDataRepository } from "../../../lib/data/repository";
-import type { UserProfile } from "../../../lib/mock-data";
+import type { UserProfile } from "../../../lib/data/repository";
 
 export function validateProfilePayload(payload: Record<string, string>) {
   if (!payload.company_industry) {
@@ -12,14 +12,24 @@ export function validateProfilePayload(payload: Record<string, string>) {
 }
 
 export async function GET() {
-  const repo = getDataRepository();
-  return NextResponse.json(await repo.getProfile());
+  try {
+    const repo = getDataRepository();
+    return NextResponse.json(await repo.getProfile());
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to load profile";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
-  const payload = (await req.json()) as UserProfile;
-  validateProfilePayload(payload);
-  const repo = getDataRepository();
-  const profile = await repo.upsertProfile(payload);
-  return NextResponse.json({ ok: true, profile });
+  try {
+    const payload = (await req.json()) as UserProfile;
+    validateProfilePayload(payload);
+    const repo = getDataRepository();
+    const profile = await repo.upsertProfile(payload);
+    return NextResponse.json({ ok: true, profile });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to save profile";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

@@ -10,7 +10,7 @@ from sources import MODEL_DAILY_LIMIT, MODEL_SOURCES
 from transform import dedupe_models_by_provider_name
 
 
-def run_model_pipeline(limit_per_source: int = MODEL_DAILY_LIMIT) -> dict[str, int]:
+def run_model_pipeline(limit_per_source: int = MODEL_DAILY_LIMIT, run_id: str | None = None) -> dict[str, int]:
     fetched: list[ModelRecord] = []
     for source in MODEL_SOURCES:
         try:
@@ -21,7 +21,7 @@ def run_model_pipeline(limit_per_source: int = MODEL_DAILY_LIMIT) -> dict[str, i
     deduped = dedupe_models_by_provider_name([asdict(row) for row in fetched])
     model_rows = [ModelRecord(**row) for row in deduped]
     enriched = enrich_models(model_rows)
-    persisted = upsert_models(enriched)
+    persisted = upsert_models(enriched, run_id=run_id)
 
     return {
         "sources": len(MODEL_SOURCES),

@@ -10,7 +10,7 @@ from sources import NEWS_DAILY_LIMIT, NEWS_SOURCES
 from transform import dedupe_by_url
 
 
-def run_news_pipeline(limit_per_source: int = NEWS_DAILY_LIMIT) -> dict[str, int]:
+def run_news_pipeline(limit_per_source: int = NEWS_DAILY_LIMIT, run_id: str | None = None) -> dict[str, int]:
     fetched: list[ArticleRecord] = []
     for source in NEWS_SOURCES:
         try:
@@ -21,7 +21,7 @@ def run_news_pipeline(limit_per_source: int = NEWS_DAILY_LIMIT) -> dict[str, int
     deduped = dedupe_by_url([asdict(row) for row in fetched])
     article_rows = [ArticleRecord(**row) for row in deduped]
     enriched = enrich_articles(article_rows)
-    persisted = upsert_articles(enriched)
+    persisted = upsert_articles(enriched, run_id=run_id)
 
     return {
         "sources": len(NEWS_SOURCES),
